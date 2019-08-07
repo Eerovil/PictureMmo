@@ -1,0 +1,16 @@
+MOV REG 1       # Zig, Move to dir REG (Using REG % 4)
+SWP             # color
+COL             # set REG to current color (0=my, 1=enemy, 2=empty)
+OR 2            # 0000 & 0010 -> 0010, 0010 & 0010 -> 0010
+SWP             # direction
+DRW             # draw
+ADD 1
+MOV REG 1       # Zag
+SWP             # color
+IF 2            # If color is mine or empty
+SWP             # Get direction
+ADD 1           # Change direction (Zag is the new Zig)
+ELS
+SWP             # Get direction
+ADD 3           # Continue with Zig
+FI
