@@ -1,8 +1,4 @@
-playerData = [
-['Eero', 16, 99, 255, 0, 0, 486, 2, 'movePlayer(i, 1, 1);idata = drawPlayer(i, idata);'],
-['Anna', 99, 99, 0, 255, 0, 5094, 2, 'movePlayer(i, getReg(), 1);swapReg();checkColor(i, idata);setReg(getReg() | 2);swapReg();idata = drawPlayer(i, idata);addReg(1);movePlayer(i, getReg(), 1);swapReg();if (getReg() == 2) {swapReg();addReg(1);} else {swapReg();addReg(3);}'],
-]
-
+//^^^HEADER$$$
 
 reg = [null, null]
 

@@ -117,7 +117,24 @@ class Synchronizer(object):
                 'UPDATE users SET posx = ? , posy = ? , reg0 = ? , reg1 = ? WHERE name = ? ',
                 regdata
             )
-            self.runner.setPlayerData(c.execute('SELECT * FROM users').fetchall())
+            all_data = c.execute('SELECT * FROM users').fetchall()
+            self.runner.setPlayerData(all_data)
+            jsCompiler = compiler.PmoToJAvascript()
+
+            jsHeader = "playerData = [\n"
+            for data in all_data:
+                jsHeader += "['{}', {}, {}, {}, {}, {}, {}, {}, '{}'],\n".format(
+                    *data[:8], "".join(jsCompiler.parse_text(data[8]))
+                )
+            jsHeader += "]\n"
+
+            with open("baseindex.js", "r") as fo:
+                with open("index.js", "w") as fw:
+                    data = (
+                        fo.read().replace('//^^^HEADER$$$', jsHeader)
+                    )
+                    fw.write(data)
+
             print("Updated data")
 
 

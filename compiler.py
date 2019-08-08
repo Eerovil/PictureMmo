@@ -36,17 +36,17 @@ class PmoToJAvascript(BaseParser):
                 args[i] = "getReg()"
 
         if cmd == "MOV":
-            return "movePlayer(i, %s, %s)" % (args[0], args[1])
+            return "movePlayer(i, %s, %s);" % (args[0], args[1])
         elif cmd == "DRW":
-            return "idata = drawPlayer(i, idata)"
+            return "idata = drawPlayer(i, idata);"
         elif cmd == "ADD":
-            return "addReg(%s)" % args[0]
+            return "addReg(%s);" % args[0]
         elif cmd == "SUB":
-            return "subReg(%s)" % args[0]
+            return "subReg(%s);" % args[0]
         elif cmd == "SWP":
-            return "swapReg()"
+            return "swapReg();"
         elif cmd == "COL":
-            return "checkColor(i, idata)"
+            return "checkColor(i, idata);"
         elif cmd == "IF":
             return 'if (getReg() == %s) {' % args[0]
         elif cmd == "ELS":
@@ -54,9 +54,9 @@ class PmoToJAvascript(BaseParser):
         elif cmd == "FI":
             return '}'
         elif cmd == "AND":
-            return 'setReg(getReg() & %s)' % args[0]
+            return 'setReg(getReg() & %s);' % args[0]
         elif cmd == "OR":
-            return 'setReg(getReg() | %s)' % args[0]
+            return 'setReg(getReg() | %s);' % args[0]
         else:
             print("UNKNOWN", cmd, args)
             return ""
