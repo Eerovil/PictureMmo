@@ -11,6 +11,25 @@ Everyone has a 15? line assembly-style process (like in zachtronics games)
 
 Map is an image, start with 100x100px 
 
+
+Server:
+  Serve static index.html + latest (With apache? its cached)
+  Clients can POST their new account/new code/new color etc. Listening is flask
+
+  Every 1(?) minutes there is an update, and all clients are updated to have the most recent code.
+  This is done via a sync value in each response, saying "35 seconds till update". The client will
+  Then be like "ok, lets ask for new data in 35 seconds".
+
+  Asking for new data just means loading the cdn data again. In 30 seconds the new data is "applied".
+  i.e. There is 30 seconds time to "submit" and then 30 seconds time for the code to reach all players.
+
+  When a client connects, they get a dump of data from the cdn, containing:
+    The index.html
+    index.js (with all code + user data)
+  Then, they must simulate the game forwards since the cdn data is stale (up to 1min).
+    PROBLEM! Since the data will be overwritten after 30 seconds, the new client will have to wait up to 30sec
+    for the game to "start". Perhaps a "getting up to speed" message and running the game (with future data) at half speed for 30sec.
+
 language:
   MOV
   JMP
