@@ -130,14 +130,10 @@ class Synchronizer(object):
                     *data[:8], "".join(jsCompiler.parse_text(data[8]))
                 )
             jsHeader += "]\n"
-            jsHeader += "timestamp = {}\n".format(time())
+            jsHeader += "timestamp = new Date('{}')\n".format(datetime.now().isoformat())
 
-            with open("baseindex.js", "r") as fo:
-                with open("index.js", "w") as fw:
-                    data = (
-                        fo.read().replace('//^^^HEADER$$$', jsHeader)
-                    )
-                    fw.write(data)
+            with open("jsout.js", "w") as fw:
+                fw.write(jsHeader)
 
             print("Updated data")
             print(self.runner.playerData[0][8])

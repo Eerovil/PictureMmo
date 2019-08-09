@@ -1,24 +1,87 @@
-//^^^HEADER$$$
+var timestamp = new Date(),
+    playerData = [];
 
 reg = [null, null]
 
 var width = 100,
-    height = 100;
+    height = 100,
+    ctx,
+    canvas,
+    loop,
+    ticksSinceUpdate = 0;
 
-window.onload = function() {
-    var canvas = document.getElementById("mainCanvas");
-    var ctx = canvas.getContext("2d");
-    var img = document.getElementById("baseImage");
-    
-    ctx.drawImage(img,0,0);
-    idata = ctx.getImageData(0, 0, width, height);
-    setInterval(() => {
-        let new_idata = nextImageState(idata);
-        ctx.putImageData(new_idata, 0, 0);
-        ctx.scale(4,4);
-    }, 100)
+var tps = 10,
+    maxtps = 10; 
+
+window.addEventListener('load', onLoad);
+
+function onLoad() {
+    reloadAll();
+    canvas = document.getElementById("mainCanvas");
+    ctx = canvas.getContext("2d");
+
+    let tmpcanvas = document.createElement('canvas');
+    tmpctx = tmpcanvas.getContext("2d");
+
+    var img = new Image();
+    img.onload = () => {
+        tmpctx.imageSmoothingEnabled = false;
+        tmpctx.drawImage(img, 0, 0, width, height, 0, 0, width, height);
+        tmpctx.scale(5,5);
+        idata = tmpctx.getImageData(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
+        ctx.putImageData(idata, 0, 0);
+
+        tickLooper(idata);
+    }
+    img.src = 'image.png?cachebuster=' + new Date().getTime();
 
 };
+
+function reloadAll() {
+    ticksSinceUpdate = 0;
+    for (oldScript of document.querySelectorAll('head script')) {
+        console.log(oldScript)
+        oldScript.remove();
+    }
+    var head= document.getElementsByTagName('head')[0];
+    var script= document.createElement('script');
+    script.src= 'jsout.js?cachebuster=' + new Date().getTime();
+    head.appendChild(script);
+}
+
+
+function tickLooper(idata) {
+    let lastTick = new Date();
+    let new_idata = nextImageState(idata);
+    ticksSinceUpdate++;
+    ctx.imageSmoothingEnabled = false;
+    ctx.putImageData(new_idata, 0, 0);
+
+    const currTime = new Date()
+    // Ususally on first load we have "too fresh" data. Need to run slower/faster
+    servertick = (((currTime - timestamp) / 1000) * maxtps) - 30 * maxtps;
+    console.log("servertick", servertick, "late", ticksSinceUpdate - servertick)
+    if (ticksSinceUpdate - servertick < -2) {
+        tps = 2 * maxtps;
+    } else if (ticksSinceUpdate - servertick > 2) {
+        tps = 0.5 * maxtps;
+    } else {
+        tps = maxtps;
+    }
+
+    // Reload once we have run all ticks
+    console.log(tps)
+    if (ticksSinceUpdate >= maxtps * 60) {
+        reloadAll();
+    }
+
+    let sleepTime = (1000.0 / tps) - (currTime - lastTick);
+
+    loop = setTimeout(() => {
+        tickLooper(new_idata)
+    }, sleepTime)
+}
 
 function movePlayer(index, dir, amount) {
     switch (dir % 4) {
@@ -73,7 +136,6 @@ function checkColor(index, idata) {
         idata.data[pos+1],
         idata.data[pos+2],
     ];
-    console.log(color)
     if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
         reg[0] = 2;
     } else if (color[0] == playerData[index][3] && color[1] == playerData[index][4] && color[2] == playerData[index][5]) {
@@ -107,9 +169,5 @@ function nextImageState(idata) {
         playerData[i][7] = reg[1];
         
     }
-    document.getElementsByClassName('posx')[0].innerHTML = playerData[0][1];
-    document.getElementsByClassName('posy')[0].innerHTML = playerData[0][2];
-    document.getElementsByClassName('reg0')[0].innerHTML = reg[0];
-    document.getElementsByClassName('reg1')[0].innerHTML = reg[1];
     return idata
 }
