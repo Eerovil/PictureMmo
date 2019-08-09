@@ -8,34 +8,16 @@ var width = 100,
 window.onload = function() {
     var canvas = document.getElementById("mainCanvas");
     var ctx = canvas.getContext("2d");
-    var buffer = new Uint8ClampedArray(width * height * 4); // have enough bytes
-    for(var y = 0; y < height; y++) {
-        for(var x = 0; x < width; x++) {
-            var pos = (y * width + x) * 4; // position in buffer based on x and y
-            buffer[pos  ] = 150;           // some R value [0, 255]
-            buffer[pos+1] = 150;           // some G value
-            buffer[pos+2] = 150;           // some B value
-            buffer[pos+3] = 255;           // set alpha channel
-        }
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    // create imageData object
-    var idata = ctx.createImageData(width, height);
-
-    // set our buffer as source
-    idata.data.set(buffer);
-
-    // update canvas with new data
-    ctx.putImageData(idata, 0, 0);
-
+    var img = document.getElementById("baseImage");
+    
+    ctx.drawImage(img,0,0);
+    idata = ctx.getImageData(0, 0, width, height);
     setInterval(() => {
         let new_idata = nextImageState(idata);
         ctx.putImageData(new_idata, 0, 0);
         ctx.scale(4,4);
     }, 100)
+
 };
 
 function movePlayer(index, dir, amount) {
@@ -94,7 +76,7 @@ function checkColor(index, idata) {
     console.log(color)
     if (color[0] == 0 && color[1] == 0 && color[2] == 0) {
         reg[0] = 2;
-    } else if (color[0] == playerData[index][3] && color[1] == playerData[index][4] && color[2] == playerData[index][4]) {
+    } else if (color[0] == playerData[index][3] && color[1] == playerData[index][4] && color[2] == playerData[index][5]) {
         reg[0] = 0;
     } else {
         reg[0] = 1;

@@ -2,19 +2,18 @@ import compiler
 import sqlite3
 from time import sleep, time
 from datetime import datetime
+import numpy as np
+from PIL import Image
 
 
 class Runner(object):
     def __init__(self):
         self.reg = [0, 0]
-        self.idata = []
+        self.idata = np.zeros([100, 100, 3], dtype=np.uint8)
+        self.idata.fill(255)
         self.width = 100
         self.height = 100
         self.playerData = []
-        for x in range(self.width):
-            self.idata.append([])
-            for y in range(self.height):
-                self.idata[x].append([0, 0, 0])
 
     def setPlayerData(self, playerData):
         comp = compiler.PmoToPython()
@@ -28,9 +27,9 @@ class Runner(object):
             self.playerData[index][1] += amount
         elif dir == 1:
             self.playerData[index][2] += amount
-        elif dir == 1:
+        elif dir == 2:
             self.playerData[index][1] -= amount
-        elif dir == 1:
+        elif dir == 3:
             self.playerData[index][2] -= amount
 
         if (self.playerData[index][1] < 0):
@@ -48,12 +47,12 @@ class Runner(object):
         self.reg[1] = _tmp
 
     def checkColor(self, index):
-        color = self.idata[self.playerData[index][1]][self.playerData[index][2]]
+        color = self.idata[self.playerData[index][2]][self.playerData[index][1]]
         if (color[0] == 0 and color[1] == 0 and color[2] == 0):
             self.reg[0] = 2
-        elif (color[0] == self.playerData[index][2] and
-              color[1] == self.playerData[index][3] and
-              color[2] == self.playerData[index][4]):
+        elif (color[0] == self.playerData[index][3] and
+              color[1] == self.playerData[index][4] and
+              color[2] == self.playerData[index][5]):
             self.reg[0] = 0
         else:
             self.reg[0] = 1
@@ -62,12 +61,16 @@ class Runner(object):
         self.reg[0] = value
 
     def drawPlayer(self, index):
-        self.idata[self.playerData[index][1]][self.playerData[index][2]] = (
-            [self.playerData[index][2], self.playerData[index][3], self.playerData[index][4]]
+        self.idata[self.playerData[index][2]][self.playerData[index][1]] = (
+            [self.playerData[index][3], self.playerData[index][4], self.playerData[index][5]]
         )
 
     def addReg(self, value):
         self.reg[0] += value
+        if self.reg[0] < 0:
+            self.reg[0] += 256 * 8
+        if self.reg[0] > 255:
+            self.reg[0] = self.reg[0] % 256
 
     def getReg(self):
         return self.reg[0]
@@ -80,7 +83,7 @@ class Runner(object):
             exec(code)
             self.playerData[i][6] = self.reg[0]
             self.playerData[i][7] = self.reg[1]
-        print([data[1:3] for data in self.playerData])
+        print([data[1:3] + data[6:8] for data in self.playerData])
 
 
 class Synchronizer(object):
@@ -127,6 +130,7 @@ class Synchronizer(object):
                     *data[:8], "".join(jsCompiler.parse_text(data[8]))
                 )
             jsHeader += "]\n"
+            jsHeader += "timestamp = {}\n".format(time())
 
             with open("baseindex.js", "r") as fo:
                 with open("index.js", "w") as fw:
@@ -136,6 +140,9 @@ class Synchronizer(object):
                     fw.write(data)
 
             print("Updated data")
+            print(self.runner.playerData[0][8])
+            im = Image.fromarray(self.runner.idata)
+            im.save("image.png")
 
 
 if __name__ == "__main__":
@@ -143,4 +150,5 @@ if __name__ == "__main__":
     try:
         s.loop()
     except KeyboardInterrupt:
+        s.fetch_from_database()
         pass
