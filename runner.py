@@ -80,7 +80,10 @@ class Runner(object):
             self.reg[0] = self.playerData[i][6]
             self.reg[1] = self.playerData[i][7]
             code = self.playerData[i][8]
-            exec(code)
+            try:
+                exec(code)
+            except Exception:
+                pass
             self.playerData[i][6] = self.reg[0]
             self.playerData[i][7] = self.reg[1]
         print([data[1:3] + data[6:8] for data in self.playerData])
@@ -135,13 +138,12 @@ class Synchronizer(object):
             jsHeader += "]\n"
             jsHeader += "timestamp = new Date('{}')\n".format(datetime.now().isoformat())
 
-            with open("jsout.js", "w") as fw:
+            with open("static/jsout.js", "w") as fw:
                 fw.write(jsHeader)
 
             print("Updated data")
-            print(self.runner.playerData[0][8])
             im = Image.fromarray(self.runner.idata)
-            im.save("image.png")
+            im.save("static/image.png")
 
 
 if __name__ == "__main__":

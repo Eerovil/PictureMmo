@@ -3,6 +3,9 @@ var timestamp = new Date(),
 
 reg = [null, null]
 
+var myIndex = 0,
+    myData = {};
+
 var width = 100,
     height = 100,
     ctx,
@@ -21,6 +24,9 @@ function onLoad() {
     ctx = canvas.getContext("2d");
 
     reloadAll().then((idata) => {
+        if (playerData.length > myIndex) {
+            document.getElementById("code").innerHTML = playerData[myIndex][8];
+        }
         tickLooper(idata);
     });
 };
@@ -91,7 +97,7 @@ function tickLooper(idata) {
     const currTime = new Date()
     // Ususally on first load we have "too fresh" data. Need to run slower/faster
     servertick = Math.floor((((currTime - timestamp) / 1000) * maxtps) - (updateInterval / 2) * maxtps);
-    console.log("servertick", servertick, "clienttick", ticksSinceUpdate)
+    //console.log("servertick", servertick, "clienttick", ticksSinceUpdate)
     if (ticksSinceUpdate - servertick < -1) {
         tps = 2 * maxtps;
     } else if (ticksSinceUpdate - servertick > 1) {
@@ -103,6 +109,8 @@ function tickLooper(idata) {
     let sleepTime = (1000.0 / tps) - (currTime - lastTick);
 
     // Reload once we have run all ticks
+    let updateText = maxtps * updateInterval - ticksSinceUpdate;
+    document.getElementsByClassName("updateCounter")[0].innerHTML = updateText;
     if (ticksSinceUpdate >= maxtps * updateInterval) {
         reloadAll().then((server_idata) => {
             loop = setTimeout(() => {
@@ -148,7 +156,9 @@ function movePlayer(index, dir, amount) {
 function drawPlayer(index, idata) {
     const xpos = playerData[index][1],
           ypos = playerData[index][2];
-    playerRect(index, xpos, ypos);
+
+    ctx.fillStyle = `rgb(${playerData[index][3]}, ${playerData[index][4]}, ${playerData[index][5]})`;
+    ctx.fillRect(xpos * 5, ypos * 5, 5, 5);
 
     let pos = (ypos * width + xpos) * 4;
     idata.data[pos  ] = playerData[index][3]
@@ -157,14 +167,17 @@ function drawPlayer(index, idata) {
     return idata;
 }
 
-function playerRect(index, xpos, ypos) {
-    ctx.fillStyle = `rgb(${playerData[index][3]}, ${playerData[index][4]}, ${playerData[index][5]})`;
+function removePosRect(xpos, ypos, idata) {
+    let pos = (ypos * width + xpos) * 4;
+    ctx.fillStyle = `rgb(${idata.data[pos]}, ${idata.data[pos+1]}, ${idata.data[pos+2]})`;
     ctx.fillRect(xpos * 5, ypos * 5, 5, 5);
 }
-function posRect(index, xpos, ypos) {
+
+function posRect(xpos, ypos, idata) {
     ctx.fillStyle = `rgb(0, 0, 0)`;
     ctx.fillRect(xpos * 5, ypos * 5, 5, 5);
-    ctx.fillStyle = `rgb(${playerData[index][3]}, ${playerData[index][4]}, ${playerData[index][5]})`;
+    let pos = (ypos * width + xpos) * 4;
+    ctx.fillStyle = `rgb(${idata.data[pos]}, ${idata.data[pos+1]}, ${idata.data[pos+2]})`;
     ctx.fillRect(xpos * 5 + 1, ypos * 5 + 1, 3, 3);
 }
 
@@ -216,12 +229,77 @@ function nextImageState(idata) {
         reg[1] = playerData[i][7];
         const prevx = playerData[i][1],
               prevy = playerData[i][2];
-        eval(playerData[i][8]);
-        playerRect(i, prevx, prevy);
-        posRect(i, playerData[i][1], playerData[i][2])
+        try {
+            eval(playerData[i][8]);
+        } catch (e) {
+            console.log(e)
+        }
+        removePosRect(prevx, prevy, idata);
+        posRect(playerData[i][1], playerData[i][2], idata)
         playerData[i][6] = reg[0];
         playerData[i][7] = reg[1];
         
     }
+
+    if (playerData.length > myIndex) {
+        document.getElementsByClassName("posx")[0].innerHTML = playerData[myIndex][1];
+        document.getElementsByClassName("posy")[0].innerHTML = playerData[myIndex][2];
+        document.getElementsByClassName("reg0")[0].innerHTML = playerData[myIndex][6];
+        document.getElementsByClassName("reg1")[0].innerHTML = playerData[myIndex][7];
+    }
     return idata
+}
+
+function login() {
+    const name = document.getElementById("name").value;
+    fetch('/login', {
+        method: 'POST' ,headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({"name": name})
+    }).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        myData = data;
+        console.log(myData);
+        log("Logged in as " + name + ".")
+        document.getElementById('code').style['display'] = "inline";
+        document.getElementById('code').innerHTML = myData[3];
+        const color = rgbToHex(myData[0], myData[1], myData[2]);
+        document.getElementById('mycolor').innerHTML = color;
+        document.getElementById('mycolor').style['color'] = color;
+
+        document.getElementById('loginBtn').style['display'] = "none";
+        document.getElementById('saveBtn').style['display'] = "inline";
+
+    })
+}
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function saveCode() {
+    const name = document.getElementById("name").value;
+    const myCode = document.getElementById("code").value;
+
+    fetch('/update', {
+        method: 'POST' ,headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({"name": name, "code": myCode})
+    }).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        console.log(data)
+        log("Code saved. " + (ticksSinceUpdate * 2 < maxtps * updateInterval ? "" : "Reloading in two updates"))
+    });
+}
+
+function log(text) {
+    const ul = document.querySelector('#log > ul');
+    let li = document.createElement('li');
+    li.innerHTML = text;
+    ul.prepend(li);
 }

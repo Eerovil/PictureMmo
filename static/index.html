@@ -1,0 +1,56 @@
+<html>
+<head>
+<style>
+.canvas-container, .values-container {
+    display: inline-block;
+    vertical-align: top;
+}
+.input-container {
+    display: block;
+}
+#code, #saveBtn {
+    display: none;
+}
+#log {
+    height: 50px;
+    overflow: auto;
+}
+</style>
+</head>
+<body>
+<div>
+<div class="canvas-container">
+    <canvas id="mainCanvas" width="500" height="500" style="height: 90vh;"></canvas>
+</div>
+<div class="values-container">
+    <div class="input-container">
+        <label for="name">Name: </label>
+        <input type="text" id="name" value="Eero"></input>
+        <span id="mycolor"></span>
+    </div>
+
+    <div class="input-container">
+        <textarea id="code" cols="40" rows="25"></textarea>
+    </div>
+
+    <div class="input-container">
+        <input id="loginBtn" type="submit" onclick="login();" value="Login"></input>
+        <input id="saveBtn" type="submit" onclick="saveCode();" value="Save"></input>
+    </div>
+    <div class="input-container">
+        <div id="log">
+        <ul>
+        </ul>
+        </div>
+    </div>
+    <table>
+    <tr><td>X: <span class="posx"></span></td></tr>
+    <tr><td>Y: <span class="posy"></span></td></tr>
+    <tr><td>REG 0: <span class="reg0"></span></td></tr>
+    <tr><td>REG 1: <span class="reg1"></span></td></tr>
+    <tr><td>Code update in: <span class="updateCounter"></span></td></tr>
+    </table>
+</div>
+<script src="baseindex.js"></script>
+</body>
+</html>

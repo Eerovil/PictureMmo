@@ -1,11 +1,11 @@
 CREATE TABLE users (
     name TEXT PRIMARY KEY,
-    posx INT,
-    posy INT,
-    red INT,
-    green INT,
-    blue INT,
-    reg0 INT,
-    reg1 INT,
-    code TEXT
+    posx INT  DEFAULT 0,
+    posy INT DEFAULT 0,
+    red INT DEFAULT 0,
+    green INT DEFAULT 0,
+    blue INT DEFAULT 0,
+    reg0 INT DEFAULT 0,
+    reg1 INT DEFAULT 0,
+    code TEXT DEFAULT ""
 )

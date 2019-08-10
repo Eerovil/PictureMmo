@@ -1,6 +1,8 @@
 import sqlite3
 from flask import Flask
 from flask import g, request
+import json
+from random import randrange
 
 
 app = Flask(__name__)
@@ -29,17 +31,64 @@ def close_connection(exception):
         db.close()
 
 
-@app.route('/update')
+@app.route('/update', methods=['POST'])
 def update():
+    db = get_db()
+    cur = db.cursor()
+    data = request.get_json()
+    name = data.get('name')[:25]
+    _code = data.get('code').split("\n")
+    code = ""
+    for i in range(len(_code)):
+        code += _code[i][:40] + "\n"
+        if i > 25:
+            break
+
+    if 'red' in data:
+        cur.execute(
+            'UPDATE users SET red = ? , green = ? , blue = ? , code = ? WHERE name = ?', (
+                data.get('red'),
+                data.get('green'),
+                data.get('blue'),
+                code,
+                name,
+            )
+        ).fetchall()
+    else:
+        cur.execute(
+            'UPDATE users SET code = ? WHERE name = ?', (
+                code,
+                name,
+            )
+        )
+    return json.dumps(db.commit())
+
+
+@app.route('/login', methods=['POST'])
+def login():
     cur = get_db().cursor()
-    cur.execute(
-        'INSERT OR UPDATE INTO users (name, red, green, blue, code) VALUES (?, ?, ?, ?, ?)', (
-            request.args.get('name'),
-            request.args.get('red'),
-            request.args.get('green'),
-            request.args.get('blue'),
-            request.args.get('code')
+    data = request.get_json()
+    name = data.get('name')[:25]
+    print(name)
+    ret = cur.execute(
+        'SELECT red, green, blue, code FROM users WHERE name = ?', (name, )
+    ).fetchone()
+    if ret:
+        return json.dumps(ret)
+    # Create new user
+
+    ret = cur.execute(
+        'INSERT INTO users (name, red, green, blue) VALUES (?, ?, ?, ?) ', (
+            name,
+            randrange(255),
+            randrange(255),
+            randrange(255)
         )
     )
+    get_db().commit()
+    ret = cur.execute(
+        'SELECT red, green, blue, code FROM users WHERE name = ?', (name, )
+    ).fetchone()
+    return json.dumps(ret)
 
-    
+    return "{}"
