@@ -8,7 +8,8 @@ var width = 100,
     ctx,
     canvas,
     loop,
-    ticksSinceUpdate = 0;
+    ticksSinceUpdate = 0,
+    updateInterval = 10;
 
 var tps = 10,
     maxtps = 10; 
@@ -19,7 +20,7 @@ function onLoad() {
     canvas = document.getElementById("mainCanvas");
     ctx = canvas.getContext("2d");
 
-    reloadAll().then(() => {
+    reloadAll().then((idata) => {
         tickLooper(idata);
     });
 };
@@ -39,7 +40,7 @@ async function reloadAll() {
         script.src= 'jsout.js?cachebuster=' + new Date().getTime();
         head.appendChild(script);
         script.onload = function() {
-            if (new Date() - timestamp > 60000) {
+            if (new Date() - timestamp > updateInterval * 1000) {
                 alert("No data from server");
             }
             resolve();
@@ -54,7 +55,7 @@ async function reloadAll() {
         var img = new Image();
         img.onload = () => {
             tmpctx.drawImage(img, 0, 0, width, height, 0, 0, width, height);
-            idata = tmpctx.getImageData(0, 0, width, height);
+            let idata = tmpctx.getImageData(0, 0, width, height);
             ctx.clearRect(0, 0, width * 500, height * 500);
             ctx.imageSmoothingEnabled = false;
             for (let pos=0; pos<idata.data.length; pos+=4) {
@@ -65,13 +66,19 @@ async function reloadAll() {
                         ctx.fillRect(((pos / 4) % width) * 5, (Math.floor((pos / 4) / width)) * 5, 5, 5);
                     }
             }
-            resolve();
+            resolve(idata);
         }
         img.onerror = reject;
         img.src = 'image.png?cachebuster=' + new Date().getTime();
     }));
 
-    await Promise.all(promises);
+    let ret;
+
+    await Promise.all(promises).then((values) => {
+        ret = values[1];
+    });
+    return ret;  // idata
+
 }
 
 
@@ -83,26 +90,31 @@ function tickLooper(idata) {
 
     const currTime = new Date()
     // Ususally on first load we have "too fresh" data. Need to run slower/faster
-    servertick = Math.floor((((currTime - timestamp) / 1000) * maxtps) - 30 * maxtps);
+    servertick = Math.floor((((currTime - timestamp) / 1000) * maxtps) - (updateInterval / 2) * maxtps);
     console.log("servertick", servertick, "clienttick", ticksSinceUpdate)
-    if (ticksSinceUpdate - servertick < -2) {
+    if (ticksSinceUpdate - servertick < -1) {
         tps = 2 * maxtps;
-    } else if (ticksSinceUpdate - servertick > 2) {
+    } else if (ticksSinceUpdate - servertick > 1) {
         tps = 0.5 * maxtps;
     } else {
         tps = maxtps;
     }
 
-    // Reload once we have run all ticks
-    if (ticksSinceUpdate >= maxtps * 60) {
-        reloadAll();
-    }
-
     let sleepTime = (1000.0 / tps) - (currTime - lastTick);
 
-    loop = setTimeout(() => {
-        tickLooper(new_idata)
-    }, sleepTime)
+    // Reload once we have run all ticks
+    if (ticksSinceUpdate >= maxtps * updateInterval) {
+        reloadAll().then((server_idata) => {
+            loop = setTimeout(() => {
+                tickLooper(server_idata)
+            }, sleepTime)
+        });
+    } else {
+        loop = setTimeout(() => {
+            tickLooper(new_idata)
+        }, sleepTime)
+    }
+
 }
 
 function movePlayer(index, dir, amount) {
@@ -199,8 +211,6 @@ function subReg(num) {
 
 
 function nextImageState(idata) {
-    ctx.strokeStyle = `rgb(0, 0, 0)`;
-    ctx.lineWidth = "1";
     for (let i=0; i<playerData.length; i++) {
         reg[0] = playerData[i][6];
         reg[1] = playerData[i][7];

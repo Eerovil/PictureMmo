@@ -93,14 +93,17 @@ class Synchronizer(object):
         self.fetch_from_database()
 
     def loop(self):
-        fetched = False
+        fetched = time()
         while True:
-            second = datetime.now().second
-            if not fetched and second == 30:
+            # second = datetime.now().second
+            # if not fetched and second == 30:
+            #     self.fetch_from_database()
+            #     fetched = True
+            # elif second < 30:
+            #     fetched = False
+            if (time() - fetched >= 10):
+                fetched = time()
                 self.fetch_from_database()
-                fetched = True
-            elif second < 30:
-                fetched = False
             frame_start = time()
             self.runner.run()
             to_sleep = (1.0 / self.tps) - (time() - frame_start)
